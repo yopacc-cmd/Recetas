@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mis Recetas - App Móvil</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Poppins', 'sans-serif'],
+                    },
+                    colors: {
+                        skyLight: '#f0f7ff',
+                        skySoft: '#e0f2fe',
+                        skyMedium: '#bae6fd',
+                        skyAccent: '#0284c7',
+                        navyDark: '#0f172a',
+                        navyText: '#1e293b',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        html {
+            /* 20% Increase in base font size (16px * 1.2 = 19.2px) */
+            font-size: 19.2px;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        /* Touch feedback utility */
+        .active-scale:active {
+            transform: scale(0.96);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col font-sans selection:bg-sky-200 pb-20 sm:pb-0">
+
+    <!-- Header / Navbar Top Mobile Optimized -->
+    <header class="bg-white/95 backdrop-blur-md sticky top-0 z-30 border-b border-sky-100 shadow-sm">
+        <div class="max-w-md mx-auto px-4 py-3.5 flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+                <span class="text-3xl">🍲</span>
+                <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Mis Recetas</h1>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="openShoppingListModal()" class="relative bg-skySoft active:bg-skyMedium text-sky-950 font-semibold p-3 rounded-2xl shadow-sm transition-transform active-scale flex items-center justify-center cursor-pointer">
+                    <span class="text-xl">🛒</span>
+                    <span id="shoppingCartBadge" class="absolute -top-1 -right-1 bg-sky-600 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white">0</span>
+                </button>
+                <button onclick="openAddModal()" class="bg-sky-600 active:bg-sky-700 text-white font-semibold p-3 rounded-2xl shadow-sm transition-transform active-scale flex items-center justify-center cursor-pointer">
+                    <span class="text-xl">➕</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 max-w-md w-full mx-auto px-4 py-5">
+        
+        <!-- Search and Filters Bar -->
+        <div class="space-y-3 mb-6">
+            <div class="relative w-full">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-sky-400 text-lg">🔍</span>
+                <input type="text" id="searchInput" oninput="filterRecipes()" placeholder="Buscar ingrediente o receta..." class="w-full pl-11 pr-4 py-3.5 bg-white border border-sky-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-sky-400 shadow-sm text-slate-700 placeholder-slate-400 text-base">
+            </div>
+            <button id="filterFavBtn" onclick="toggleFavoriteFilter()" class="w-full py-3 bg-white border border-sky-200 active:bg-sky-50 rounded-2xl font-semibold text-slate-700 shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer text-base active-scale">
+                <span>⭐</span> Solo Favoritas
+            </button>
+        </div>
+
+        <!-- Recipe Grid / Mobile List -->
+        <div id="recipeGrid" class="space-y-4">
+            <!-- Dynamically populated -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="hidden text-center py-14">
+            <p class="text-5xl mb-3">🍳</p>
+            <p class="text-xl font-bold text-slate-600">Sin recetas</p>
+            <p class="text-sm text-slate-400 mt-1">Prueba otra búsqueda o añade una nueva receta.</p>
+        </div>
+    </main>
+
+    <!-- Floating Action Button for Adding Recipe on Mobile -->
+    <div class="fixed bottom-5 right-5 z-20 sm:hidden">
+        <button onclick="openAddModal()" class="bg-sky-600 active:bg-sky-700 text-white font-bold p-4 rounded-full shadow-lg transition-transform active-scale flex items-center justify-center cursor-pointer text-2xl border-2 border-white">
+            ✨
+        </button>
+    </div>
+
+    <!-- Detail Modal -->
+    <div id="detailModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-lg max-h-[92vh] overflow-y-auto p-5 sm:p-7 shadow-2xl relative border-t sm:border border-sky-100 animate-in slide-in-from-bottom duration-200">
+            <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-4 sm:hidden"></div>
+            <button onclick="closeDetailModal()" class="absolute top-4 right-4 w-10 h-10 rounded-full bg-slate-100 active:bg-slate-200 flex items-center justify-center text-slate-600 font-bold text-lg transition-all cursor-pointer">✕</button>
+            
+            <div id="modalContent">
+                <!-- Dynamically populated recipe details -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Shopping List Modal (WhatsApp Ready) -->
+    <div id="shoppingModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-lg max-h-[92vh] overflow-y-auto p-5 sm:p-7 shadow-2xl relative border-t sm:border border-sky-100">
+            <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-4 sm:hidden"></div>
+            <button onclick="closeShoppingListModal()" class="absolute top-4 right-4 w-10 h-10 rounded-full bg-slate-100 active:bg-slate-200 flex items-center justify-center text-slate-600 font-bold text-lg transition-all cursor-pointer">✕</button>
+            
+            <div class="flex items-center gap-3 mb-4">
+                <span class="text-3xl">🛒</span>
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-800">Lista de la Compra</h2>
+                    <p class="text-xs text-slate-500">Añade productos diarios o tus recetas</p>
+                </div>
+            </div>
+
+            <!-- Quick Add Daily Item Form -->
+            <form onsubmit="addCustomShoppingItem(event)" class="flex gap-2 mb-4">
+                <input type="text" id="customItemInput" placeholder="Añadir (ej. Leche, Pan...)" required class="flex-1 px-4 py-3 bg-slate-50 border border-sky-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-sky-400 text-base">
+                <button type="submit" class="bg-sky-600 active:bg-sky-700 text-white font-semibold px-4 py-3 rounded-2xl shadow-sm transition-all cursor-pointer text-base active-scale">
+                    ➕
+                </button>
+            </form>
+
+            <div id="shoppingSelectedRecipesList" class="flex flex-wrap gap-1.5 mb-4 p-2.5 bg-skyLight rounded-2xl border border-sky-100">
+                <!-- Selected recipes badges -->
+            </div>
+
+            <div class="flex items-center justify-between gap-2 mb-4">
+                <button onclick="uncheckAllShoppingItems()" class="text-xs font-semibold text-slate-700 bg-slate-100 active:bg-slate-200 px-3 py-2 rounded-xl transition-all cursor-pointer">
+                    🔄 Desmarcar
+                </button>
+                <div class="flex gap-2">
+                    <button onclick="sendToWhatsApp()" class="text-xs font-bold text-emerald-950 bg-emerald-100 active:bg-emerald-200 border border-emerald-300 px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-1 shadow-sm active-scale">
+                        <span>💬</span> WhatsApp
+                    </button>
+                    <button onclick="clearShoppingList()" class="text-xs font-semibold text-rose-700 bg-rose-100 active:bg-rose-200 px-3 py-2 rounded-xl transition-all cursor-pointer">
+                        🗑️ Vaciar
+                    </button>
+                </div>
+            </div>
+
+            <div id="shoppingItemsContainer" class="space-y-2 mb-4">
+                <!-- Dynamically populated shopping list items -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Recipe Modal -->
+    <div id="addModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-lg max-h-[92vh] overflow-y-auto p-5 sm:p-7 shadow-2xl relative border-t sm:border border-sky-100">
+            <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-4 sm:hidden"></div>
+            <button onclick="closeAddModal()" class="absolute top-4 right-4 w-10 h-10 rounded-full bg-slate-100 active:bg-slate-200 flex items-center justify-center text-slate-600 font-bold text-lg transition-all cursor-pointer">✕</button>
+            
+            <h2 class="text-2xl font-bold text-slate-800 mb-5 flex items-center gap-2">
+                <span>📖</span> Nueva Receta
+            </h2>
+
+            <form id="recipeForm" onsubmit="saveRecipe(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Nombre</label>
+                    <input type="text" id="recipeName" required placeholder="Ej. Bizcocho de yogur" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-sky-400 text-base">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Raciones base</label>
+                    <input type="number" id="recipePortions" min="1" max="50" value="4" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-sky-400 text-base">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Ingredientes (uno por línea)</label>
+                    <textarea id="recipeIngredients" rows="3" required placeholder="300g de harina&#10;2 huevos&#10;1 vaso de leche" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-sky-400 text-base"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Pasos de preparación (uno por línea)</label>
+                    <textarea id="recipeSteps" rows="3" required placeholder="Precalentar el horno a 180ºC&#10;Mezclar los ingredientes" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-sky-400 text-base"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">💡 Mis trucos (opcional)</label>
+                    <textarea id="recipeTips" rows="2" placeholder="Ej. Ponerle una pizca de canela..." class="w-full px-4 py-3 bg-amber-50/50 border border-amber-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-amber-400 text-base"></textarea>
+                </div>
+
+                <div class="flex items-center gap-2.5 pt-1">
+                    <input type="checkbox" id="recipeFavorite" class="w-6 h-6 accent-sky-600 rounded cursor-pointer">
+                    <label for="recipeFavorite" class="text-base font-medium text-slate-700 cursor-pointer">Marcar como favorita ⭐</label>
+                </div>
+
+                <div class="pt-3 flex gap-2">
+                    <button type="button" onclick="closeAddModal()" class="flex-1 py-3 bg-slate-100 active:bg-slate-200 text-slate-700 font-semibold rounded-2xl transition-all cursor-pointer text-base">Cancelar</button>
+                    <button type="submit" class="flex-1 py-3 bg-sky-600 active:bg-sky-700 text-white font-semibold rounded-2xl transition-all cursor-pointer shadow-sm text-base active-scale">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-slate-900/90 backdrop-blur-md text-white px-5 py-3 rounded-2xl shadow-xl transition-all transform translate-y-20 opacity-0 z-50 font-semibold text-sm text-center max-w-xs w-full">
+        Mensaje
+    </div>
+
+    <script>
+        // Default Preloaded Recipes
+        const defaultRecipes = [
+            {
+                id: 'tortilla-patatas',
+                name: 'Tortilla de patatas',
+                basePortions: 4,
+                ingredients: [
+                    '4 patatas grandes',
+                    '6 huevos',
+                    '1 cebolla',
+                    '50ml de aceite de oliva',
+                    'Sal al gusto'
+                ],
+                steps: [
+                    'Pelar y cortar las patatas en láminas finas y la cebolla en juliana fina.',
+                    'Freír las patatas y la cebolla en una sartén con abundante aceite a fuego medio hasta que estén tiernas y ligeramente doradas.',
+                    'Batir los huevos en un bol grande con una pizca de sal.',
+                    'Escurrir bien el aceite de las patatas y la cebolla, mezclándolos con el huevo batido.',
+                    'Cuajar la mezcla en una sartén con unas gotas de aceite por ambos lados hasta el punto deseado.'
+                ],
+                tips: 'Pochar la patata a fuego lento y dejar reposar la mezcla de patata con el huevo batido durante 5 minutos antes de cuajar para que quede súper jugosa.',
+                favorite: true
+            },
+            {
+                id: 'lentejas',
+                name: 'Lentejas tradicionales',
+                basePortions: 4,
+                ingredients: [
+                    '300g de lentejas pardinas',
+                    '1 chorizo fresco',
+                    '1 patata mediana',
+                    '2 zanahorias',
+                    '1 cebolla pequeña',
+                    '1 hoja de laurel',
+                    '1 cucharadita de pimentón dulce',
+                    '1 litro de caldo de verduras',
+                    '2 cucharadas de aceite de oliva'
+                ],
+                steps: [
+                    'Lavar las lentejas bajo el grifo y colocarlas en una cazuela amplia.',
+                    'Pelar y trocear la patata y las zanahorias. Picar finamente la cebolla.',
+                    'Añadir a la cazuela las verduras troceadas, el chorizo entero, la hoja de laurel y el pimentón dulce.',
+                    'Verter el caldo de verduras y el aceite de oliva.',
+                    'Cocinar a fuego medio-bajo durante unos 45 minutos hasta que las lentejas y las patatas estén bien tiernas.'
+                ],
+                tips: 'Añadir un chorrito de vinagre de jerez justo al servir en el plato para resaltar y potenciar todo el sabor.',
+                favorite: true
+            },
+            {
+                id: 'arroz-con-leche',
+                name: 'Arroz con leche',
+                basePortions: 4,
+                ingredients: [
+                    '1 litro de leche entera',
+                    '100g de arroz redondo',
+                    '120g de azúcar',
+                    'Piel de 1 limón',
+                    '1 rama de canela',
+                    'Canela en polvo para decorar'
+                ],
+                steps: [
+                    'Poner a calentar la leche en una cazuela junto con la rama de canela y la piel de limón a fuego medio.',
+                    'Cuando comience a humear, añadir el arroz redondo previamente enjuagado.',
+                    'Cocer a fuego lento removiendo constantemente con una cuchara de madera durante unos 40-50 minutos.',
+                    'Añadir el azúcar y continuar removiendo durante 10 minutos más hasta que quede cremoso.',
+                    'Retirar la canela y el limón, servir en cuencos y espolvorear canela en polvo por encima.'
+                ],
+                tips: 'Usar solo la parte amarilla de la piel del limón sin nada de la parte blanca para evitar que amargue la leche.',
+                favorite: false
+            }
+        ];
+
+        let recipes = [];
+        let shoppingCartRecipeIds = [];
+        let customShoppingItems = [];
+        let checkedShoppingItems = {};
+        let activeFavoriteFilter = false;
+        let currentViewingRecipe = null;
+        let currentSelectedPortions = 4;
+
+        function initApp() {
+            const saved = localStorage.getItem('pastel_recipes');
+            if (saved) {
+                try {
+                    recipes = JSON.parse(saved);
+                } catch (e) {
+                    recipes = defaultRecipes;
+                }
+            } else {
+                recipes = defaultRecipes;
+                saveToLocalStorage();
+            }
+
+            const savedCart = localStorage.getItem('pastel_shopping_cart');
+            if (savedCart) {
+                try {
+                    shoppingCartRecipeIds = JSON.parse(savedCart);
+                } catch (e) {
+                    shoppingCartRecipeIds = [];
+                }
+            }
+
+            const savedCustomItems = localStorage.getItem('pastel_custom_shopping_items');
+            if (savedCustomItems) {
+                try {
+                    customShoppingItems = JSON.parse(savedCustomItems);
+                } catch (e) {
+                    customShoppingItems = [];
+                }
+            }
+
+            const savedChecked = localStorage.getItem('pastel_checked_items');
+            if (savedChecked) {
+                try {
+                    checkedShoppingItems = JSON.parse(savedChecked);
+                } catch (e) {
+                    checkedShoppingItems = {};
+                }
+            }
+
+            updateShoppingCartBadge();
+            renderRecipes();
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem('pastel_recipes', JSON.stringify(recipes));
+            localStorage.setItem('pastel_shopping_cart', JSON.stringify(shoppingCartRecipeIds));
+            localStorage.setItem('pastel_custom_shopping_items', JSON.stringify(customShoppingItems));
+            localStorage.setItem('pastel_checked_items', JSON.stringify(checkedShoppingItems));
+        }
+
+        function updateShoppingCartBadge() {
+            const badge = document.getElementById('shoppingCartBadge');
+            const totalItemsCount = shoppingCartRecipeIds.length + customShoppingItems.length;
+            badge.textContent = totalItemsCount;
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 2500);
+        }
+
+        function renderRecipes() {
+            const grid = document.getElementById('recipeGrid');
+            const emptyState = document.getElementById('emptyState');
+            const query = document.getElementById('searchInput').value.toLowerCase();
+
+            const filtered = recipes.filter(r => {
+                const matchesSearch = r.name.toLowerCase().includes(query) || 
+                    r.ingredients.some(i => i.toLowerCase().includes(query));
+                const matchesFav = activeFavoriteFilter ? r.favorite : true;
+                return matchesSearch && matchesFav;
+            });
+
+            grid.innerHTML = '';
+
+            if (filtered.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            emptyState.classList.add('hidden');
+
+            filtered.forEach(recipe => {
+                const card = document.createElement('div');
+                const isInCart = shoppingCartRecipeIds.includes(recipe.id);
+                card.className = "bg-white rounded-3xl p-5 shadow-sm active:bg-slate-50 transition-all border border-sky-100 flex flex-col justify-between cursor-pointer active-scale";
+                card.onclick = () => openDetailModal(recipe.id);
+
+                card.innerHTML = `
+                    <div>
+                        <div class="flex items-start justify-between gap-2 mb-2">
+                            <h3 class="text-xl font-bold text-slate-800">${recipe.name}</h3>
+                            <button onclick="event.stopPropagation(); toggleFavorite('${recipe.id}')" class="text-2xl p-1 focus:outline-none">
+                                ${recipe.favorite ? '⭐' : '☆'}
+                            </button>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-1.5 text-xs font-medium text-slate-500 mb-2">
+                            <span class="bg-sky-50 text-sky-700 px-2.5 py-0.5 rounded-full border border-sky-100">👥 ${recipe.basePortions} rac.</span>
+                            <span class="bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-full">🥘 ${recipe.ingredients.length} ingr.</span>
+                            ${recipe.tips ? '<span class="bg-amber-50 text-amber-700 px-2.5 py-0.5 rounded-full border border-amber-200">💡 Truco</span>' : ''}
+                        </div>
+                        <p class="text-sm text-slate-500 line-clamp-2">
+                            ${recipe.steps[0] || 'Receta casera deliciosa.'}
+                        </p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                        <button onclick="event.stopPropagation(); toggleRecipeInCart('${recipe.id}')" class="flex-1 py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1 transition-all cursor-pointer ${isInCart ? 'bg-skyMedium text-sky-950 border border-sky-300' : 'bg-slate-50 active:bg-skySoft text-slate-700 border border-slate-200'}">
+                            <span>${isInCart ? '🛒 Añadida' : '➕ A la compra'}</span>
+                        </button>
+                        <span class="text-xs font-bold text-sky-600">Ver →</span>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function toggleFavoriteFilter() {
+            activeFavoriteFilter = !activeFavoriteFilter;
+            const btn = document.getElementById('filterFavBtn');
+            if (activeFavoriteFilter) {
+                btn.classList.add('bg-skySoft', 'border-sky-300', 'text-sky-900');
+                btn.innerHTML = '<span>⭐</span> Mostrando Favoritas';
+            } else {
+                btn.classList.remove('bg-skySoft', 'border-sky-300', 'text-sky-900');
+                btn.innerHTML = '<span>⭐</span> Solo Favoritas';
+            }
+            renderRecipes();
+        }
+
+        function toggleFavorite(id) {
+            const recipe = recipes.find(r => r.id === id);
+            if (recipe) {
+                recipe.favorite = !recipe.favorite;
+                saveToLocalStorage();
+                renderRecipes();
+                if (currentViewingRecipe && currentViewingRecipe.id === id) {
+                    openDetailModal(id);
+                }
+                showToast(recipe.favorite ? 'Añadida a favoritas ⭐' : 'Eliminada de favoritas');
+            }
+        }
+
+        function toggleRecipeInCart(id) {
+            const index = shoppingCartRecipeIds.indexOf(id);
+            if (index > -1) {
+                shoppingCartRecipeIds.splice(index, 1);
+                showToast('Receta quitada de la compra 🛒');
+            } else {
+                shoppingCartRecipeIds.push(id);
+                showToast('Receta añadida a la compra 🛒');
+            }
+            saveToLocalStorage();
+            updateShoppingCartBadge();
+            renderRecipes();
+            if (currentViewingRecipe && currentViewingRecipe.id === id) {
+                openDetailModal(id);
+            }
+        }
+
+        function openAddModal() {
+            document.getElementById('recipeForm').reset();
+            document.getElementById('addModal').classList.remove('hidden');
+        }
+
+        function closeAddModal() {
+            document.getElementById('addModal').classList.add('hidden');
+        }
+
+        function saveRecipe(e) {
+            e.preventDefault();
+            const name = document.getElementById('recipeName').value.trim();
+            const basePortions = parseInt(document.getElementById('recipePortions').value) || 4;
+            const ingredientsText = document.getElementById('recipeIngredients').value.trim();
+            const stepsText = document.getElementById('recipeSteps').value.trim();
+            const tipsText = document.getElementById('recipeTips').value.trim();
+            const favorite = document.getElementById('recipeFavorite').checked;
+
+            const ingredients = ingredientsText.split('\n').map(i => i.trim()).filter(Boolean);
+            const steps = stepsText.split('\n').map(s => s.trim()).filter(Boolean);
+
+            const newRecipe = {
+                id: 'recipe-' + Date.now(),
+                name,
+                basePortions,
+                ingredients,
+                steps,
+                tips: tipsText,
+                favorite
+            };
+
+            recipes.unshift(newRecipe);
+            saveToLocalStorage();
+            closeAddModal();
+            renderRecipes();
+            showToast('¡Receta guardada! 🎉');
+        }
+
+        function openDetailModal(id) {
+            const recipe = recipes.find(r => r.id === id);
+            if (!recipe) return;
+            currentViewingRecipe = recipe;
+            currentSelectedPortions = recipe.basePortions;
+            updateModalContent();
+            document.getElementById('detailModal').classList.remove('hidden');
+        }
+
+        function closeDetailModal() {
+            document.getElementById('detailModal').classList.add('hidden');
+            currentViewingRecipe = null;
+        }
+
+        function changePortions(delta) {
+            currentSelectedPortions += delta;
+            if (currentSelectedPortions < 1) currentSelectedPortions = 1;
+            if (currentSelectedPortions > 50) currentSelectedPortions = 50;
+            updateModalContent();
+        }
+
+        function scaleIngredientText(text, basePortions, newPortions) {
+            if (!basePortions || basePortions <= 0) return text;
+            const ratio = newPortions / basePortions;
+
+            return text.replace(/(\d+(?:[.,]\d+)?)/g, (match) => {
+                const num = parseFloat(match.replace(',', '.'));
+                if (isNaN(num)) return match;
+                const scaled = num * ratio;
+                const rounded = Number.isInteger(scaled) ? scaled : Math.round(scaled * 10) / 10;
+                return rounded.toString().replace('.', ',');
+            });
+        }
+
+        function updateModalContent() {
+            if (!currentViewingRecipe) return;
+            const r = currentViewingRecipe;
+            const modalContent = document.getElementById('modalContent');
+            const isInCart = shoppingCartRecipeIds.includes(r.id);
+
+            const scaledIngredients = r.ingredients.map(ing => scaleIngredientText(ing, r.basePortions, currentSelectedPortions));
+
+            modalContent.innerHTML = `
+                <div class="flex items-start justify-between gap-3 mb-3">
+                    <h2 class="text-2xl font-bold text-slate-800">${r.name}</h2>
+                    <button onclick="toggleFavorite('${r.id}')" class="text-3xl active-scale">
+                        ${r.favorite ? '⭐' : '☆'}
+                    </button>
+                </div>
+
+                <div class="mb-4">
+                    <button onclick="toggleRecipeInCart('${r.id}')" class="w-full py-3 px-4 rounded-2xl font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer text-base active-scale ${isInCart ? 'bg-skyMedium text-sky-950 border border-sky-300' : 'bg-skySoft text-sky-950 active:bg-skyMedium'}">
+                        <span>🛒</span> ${isInCart ? 'En la lista (Quitar)' : 'Añadir a Lista de Compra'}
+                    </button>
+                </div>
+
+                <div class="bg-skyLight p-4 rounded-2xl mb-5 flex items-center justify-between gap-3 border border-sky-100">
+                    <div>
+                        <p class="text-sm font-bold text-slate-800">Raciones</p>
+                        <p class="text-xs text-slate-500">Base: ${r.basePortions}</p>
+                    </div>
+                    <div class="flex items-center gap-3 bg-white px-4 py-2 rounded-full shadow-sm border border-sky-200">
+                        <button onclick="changePortions(-1)" class="w-8 h-8 rounded-full bg-slate-100 active:bg-sky-100 text-slate-800 font-bold text-lg flex items-center justify-center transition-colors cursor-pointer">-</button>
+                        <span class="font-bold text-lg w-8 text-center text-slate-800">${currentSelectedPortions}</span>
+                        <button onclick="changePortions(1)" class="w-8 h-8 rounded-full bg-slate-100 active:bg-sky-100 text-slate-800 font-bold text-lg flex items-center justify-center transition-colors cursor-pointer">+</button>
+                    </div>
+                </div>
+
+                <div class="mb-5">
+                    <h3 class="text-lg font-bold text-slate-800 mb-2 flex items-center gap-2">
+                        <span>🥬</span> Ingredientes
+                    </h3>
+                    <ul class="space-y-1.5">
+                        ${scaledIngredients.map(ing => `
+                            <li class="bg-sky-50/70 p-3 rounded-2xl text-base text-slate-700 border border-sky-100/50 flex items-center gap-2">
+                                <span class="text-sky-500 font-bold">•</span>
+                                <span>${ing}</span>
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+
+                <div class="mb-5">
+                    <h3 class="text-lg font-bold text-slate-800 mb-2 flex items-center gap-2">
+                        <span>🍳</span> Preparación
+                    </h3>
+                    <ol class="space-y-2.5">
+                        ${r.steps.map((step, index) => `
+                            <li class="bg-slate-50 p-3.5 rounded-2xl text-base text-slate-700 border border-slate-100 flex gap-3">
+                                <span class="font-bold text-sky-600 bg-sky-100 w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-xs">${index + 1}</span>
+                                <span class="leading-relaxed">${step}</span>
+                            </li>
+                        `).join('')}
+                    </ol>
+                </div>
+
+                <div class="bg-amber-50/60 border border-amber-200 rounded-2xl p-4">
+                    <div class="flex items-center justify-between gap-2 mb-2">
+                        <h3 class="text-lg font-bold text-amber-900 flex items-center gap-1.5">
+                            <span>💡</span> Mis trucos
+                        </h3>
+                        <button onclick="saveRecipeTip('${r.id}')" class="bg-amber-500 active:bg-amber-600 text-white font-semibold px-3 py-1.5 rounded-xl text-xs transition-all shadow-sm cursor-pointer flex items-center gap-1 active-scale">
+                            <span>💾</span> Guardar
+                        </button>
+                    </div>
+                    <textarea id="detailRecipeTip" rows="3" placeholder="Escribe tus notas o trucos personales..." class="w-full p-3 bg-white border border-amber-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 text-base text-slate-700 placeholder-slate-400">${r.tips || ''}</textarea>
+                </div>
+            `;
+        }
+
+        function saveRecipeTip(recipeId) {
+            const recipe = recipes.find(r => r.id === recipeId);
+            if (recipe) {
+                const tipInput = document.getElementById('detailRecipeTip');
+                recipe.tips = tipInput ? tipInput.value.trim() : '';
+                saveToLocalStorage();
+                renderRecipes();
+                showToast('¡Truco guardado! 💡');
+            }
+        }
+
+        function openShoppingListModal() {
+            renderShoppingList();
+            document.getElementById('shoppingModal').classList.remove('hidden');
+        }
+
+        function closeShoppingListModal() {
+            document.getElementById('shoppingModal').classList.add('hidden');
+        }
+
+        function addCustomShoppingItem(e) {
+            e.preventDefault();
+            const input = document.getElementById('customItemInput');
+            const itemText = input.value.trim();
+            if (itemText && !customShoppingItems.includes(itemText)) {
+                customShoppingItems.push(itemText);
+                input.value = '';
+                saveToLocalStorage();
+                updateShoppingCartBadge();
+                renderShoppingList();
+                showToast('Producto añadido 🛒');
+            }
+        }
+
+        function removeCustomItem(itemText) {
+            customShoppingItems = customShoppingItems.filter(i => i !== itemText);
+            delete checkedShoppingItems[itemText];
+            saveToLocalStorage();
+            updateShoppingCartBadge();
+            renderShoppingList();
+        }
+
+        function renderShoppingList() {
+            const recipesBadges = document.getElementById('shoppingSelectedRecipesList');
+            const itemsContainer = document.getElementById('shoppingItemsContainer');
+
+            const selectedRecipes = recipes.filter(r => shoppingCartRecipeIds.includes(r.id));
+
+            if (selectedRecipes.length === 0) {
+                recipesBadges.innerHTML = '<span class="text-xs text-slate-500 italic">Sin recetas elegidas.</span>';
+            } else {
+                recipesBadges.innerHTML = selectedRecipes.map(r => `
+                    <span class="bg-white text-slate-800 text-xs font-semibold px-2.5 py-0.5 rounded-full border border-sky-200 flex items-center gap-1 shadow-sm">
+                        ${r.name}
+                        <button onclick="toggleRecipeInCart('${r.id}'); renderShoppingList();" class="text-slate-400 active:text-rose-500 font-bold">✕</button>
+                    </span>
+                `).join('');
+            }
+
+            const allItems = [];
+
+            customShoppingItems.forEach(item => {
+                allItems.push({ text: item, isCustom: true });
+            });
+
+            selectedRecipes.forEach(r => {
+                r.ingredients.forEach(ing => {
+                    if (!allItems.some(i => i.text === ing)) {
+                        allItems.push({ text: ing, isCustom: false });
+                    }
+                });
+            });
+
+            if (allItems.length === 0) {
+                itemsContainer.innerHTML = `
+                    <div class="text-center py-6">
+                        <p class="text-4xl mb-2">🛒</p>
+                        <p class="text-slate-600 font-semibold text-base">Lista vacía</p>
+                        <p class="text-xs text-slate-400 mt-0.5">Añade productos o marca recetas.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            itemsContainer.innerHTML = allItems.map((itemObj) => {
+                const ing = itemObj.text;
+                const isChecked = !!checkedShoppingItems[ing];
+                const cleanIngEscaped = ing.replace(/'/g, "\\'");
+                return `
+                    <div class="flex items-center justify-between p-3 bg-slate-50 active:bg-sky-50 rounded-2xl border border-slate-100 transition-colors">
+                        <label class="flex items-center gap-3 flex-1 cursor-pointer">
+                            <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleShoppingItem('${cleanIngEscaped}')" class="w-6 h-6 accent-sky-600 rounded cursor-pointer">
+                            <span class="text-base font-medium ${isChecked ? 'line-through text-slate-400' : 'text-slate-700'}">${ing} ${itemObj.isCustom ? '<span class="text-[10px] bg-sky-100 text-sky-800 font-normal px-1.5 py-0.5 rounded ml-1">Diario</span>' : ''}</span>
+                        </label>
+                        ${itemObj.isCustom ? `<button onclick="removeCustomItem('${cleanIngEscaped}')" class="text-slate-400 active:text-rose-600 font-bold px-2 text-sm">✕</button>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleShoppingItem(ing) {
+            checkedShoppingItems[ing] = !checkedShoppingItems[ing];
+            saveToLocalStorage();
+            renderShoppingList();
+        }
+
+        function uncheckAllShoppingItems() {
+            checkedShoppingItems = {};
+            saveToLocalStorage();
+            renderShoppingList();
+            showToast('Ingredientes desmarcados');
+        }
+
+        function clearShoppingList() {
+            shoppingCartRecipeIds = [];
+            customShoppingItems = [];
+            checkedShoppingItems = {};
+            saveToLocalStorage();
+            updateShoppingCartBadge();
+            renderRecipes();
+            renderShoppingList();
+            showToast('Lista vaciada');
+        }
+
+        function sendToWhatsApp() {
+            const selectedRecipes = recipes.filter(r => shoppingCartRecipeIds.includes(r.id));
+            const allItems = [];
+
+            customShoppingItems.forEach(item => allItems.push(item));
+            selectedRecipes.forEach(r => {
+                r.ingredients.forEach(ing => {
+                    if (!allItems.includes(ing)) allItems.push(ing);
+                });
+            });
+
+            if (allItems.length === 0) {
+                showToast('Lista vacía para enviar');
+                return;
+            }
+
+            let text = "🛒 *MI LISTA DE LA COMPRA* 🛒\n\n";
+
+            if (selectedRecipes.length > 0) {
+                text += "📋 *Recetas a preparar:*\n";
+                selectedRecipes.forEach(r => text += `• ${r.name}\n`);
+                text += "\n";
+            }
+
+            text += "📌 *Productos e Ingredientes:*\n";
+            allItems.forEach(item => {
+                const isChecked = !!checkedShoppingItems[item];
+                const box = isChecked ? "[✓]" : "[ ]";
+                text += `${box} ${item}\n`;
+            });
+
+            const encodedText = encodeURIComponent(text);
+            window.open(`https://api.whatsapp.com/send?text=${encodedText}`, '_blank');
+        }
+
+        window.onload = initApp;
+    </script>
+</body>
+</html>
